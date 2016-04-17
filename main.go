@@ -31,25 +31,27 @@ func main() {
 
 // EchoHandler takes a request and echos it back
 func EchoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := log.WithFields(log.Fields{
+		"method":  r.Method,
+		"url":     r.URL.String(),
+		"headers": r.Header,
+	})
+
 	defer r.Body.Close()
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatalln(err)
+		ctx.WithFields(log.Fields{
+			"status": 500,
+		}).Fatal(err)
+
+		w.WriteHeader(500)
 	}
 
 	w.Write(body)
 
-	// headers, err := json.Marshal(r.Header)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	log.WithFields(log.Fields{
-		"method":  r.Method,
-		"url":     r.URL.String(),
-		"headers": r.Header,
-		"body":    string(body),
-		"status":  200,
-	}).Info("done with request")
+	ctx.WithFields(log.Fields{
+		"body":   string(body),
+		"status": 200,
+	}).Info("OK")
 }
